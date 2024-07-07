@@ -12,6 +12,7 @@ from tensorflow.keras.callbacks import *
 import sklearn
 import matplotlib
 import numpy as np
+import os
 
 print("Libraries\n------------------\n")
 print(f"Tensorflow: {tf.__version__}")
@@ -160,11 +161,11 @@ encoder = Model(x, z_mean)
 
 # LOAD WEIGHTS
 
-central_tendency_encoder.load_weights("/new_trained_weights/central_tendency_encoder.h5")
-deviation_encoder.load_weights("/new_trained_weights/deviation_encoder.h5")
-vae.load_weights("/new_trained_weights/vae.h5")
-generator.load_weights("/new_trained_weights/generator.h5")
-encoder.load_weights("/new_trained_weights/encoder.h5")
+central_tendency_encoder.load_weights("./new_trained_weights/central_tendency_encoder.h5")
+deviation_encoder.load_weights("./new_trained_weights/deviation_encoder.h5")
+vae.load_weights("./new_trained_weights/vae.h5")
+generator.load_weights("./new_trained_weights/generator.h5")
+encoder.load_weights("./new_trained_weights/encoder.h5")
 
 # MCMC ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

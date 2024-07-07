@@ -14,7 +14,7 @@ import sklearn
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-
+import os
 
 print("Libraries\n------------------\n")
 print(f"Tensorflow: {tf.__version__}")
