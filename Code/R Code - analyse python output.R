@@ -1,4 +1,6 @@
 
+.rs.restartR() # restart the R session in R studio
+
 # libraries and functions ---------------------------------------------
 
 library(geomorph)
@@ -47,11 +49,11 @@ sim_pachy_depth <- c()
 
 for (i in 1:dim(simulated_pachycrocuta_tensor)[3]) {
   
-  sim_pachy1_length <- c(sim_pachy1_length, euclid(simulated_pachycrocuta_tensor[1,,i],
+  sim_pachy_length <- c(sim_pachy_length, euclid(simulated_pachycrocuta_tensor[1,,i],
                                                    simulated_pachycrocuta_tensor[2,,i]))
-  sim_pachy1_width <- c(sim_pachy1_width, euclid(simulated_pachycrocuta_tensor[3,,i],
+  sim_pachy_width <- c(sim_pachy_width, euclid(simulated_pachycrocuta_tensor[3,,i],
                                                  simulated_pachycrocuta_tensor[4,,i]))
-  sim_pachy1_depth <- c(sim_pachy1_depth, depth_estimate(simulated_pachycrocuta_tensor[1,,i],
+  sim_pachy_depth <- c(sim_pachy_depth, depth_estimate(simulated_pachycrocuta_tensor[1,,i],
                                                          simulated_pachycrocuta_tensor[2,,i],
                                                          simulated_pachycrocuta_tensor[5,,i]))
   
