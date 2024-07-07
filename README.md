@@ -31,7 +31,7 @@ The present repository contains:
   * <b>R Code - GMM data.R</b>
     * R Code to load the landmark coordinates, superimpose them with the coordiantes of tooth pits left by Pachycrocuta brevirostris on the femur of a Hippo from FN3, and then export these superimposed Procrustes form coordiantes for modelling with the python code
     * This R Code also has a simple number of lines to load the simulated data and extract length, width and depth values from these simualted pits.
-    * The R Code contains the landmark coordiantes obtained from the Hippo femur, but we do not have permission to share the reference landmark coordinates of modern carnivore species, because they come from other publications. These coordinates however are open access and have already been published. Consult the original publications for details on how to access them.
+    * The R Code contains the landmark coordiantes obtained from the Hippo femur, but we do not have permission to share all of the reference landmark coordinates of modern carnivore species, because they come from other publications. The dataset from Courtenay et al. (2021) "Developments in data science solutions for carnivore tooth pit classification" is open access and has already been published. The dataset from Courtenay et al. (2021) "3D insigths into the effects of captivity on wolf mastication and their tooth marks; implications in ecological studies of both the past and present" is no longer associated to the original publication. To avoid issues with people interested in accessing this dataset, we have obtained permission to include this file in the present repository with the name <b>Courtenay_et_al_2021b_data.txt</b>. Our R code, however, has been adapted to load the data from each of these repositories, save them to a local disk, and then load them in the associated code.
   * <b>VAE Model.py</b>
       * Python code that was originally used to define and train the Variational Autoencoder. Weights from the trained encoder are included in the Trained VAE Weights folder.
 
@@ -60,6 +60,8 @@ All code was run in an Anaconda (v.23.3.1) environment
       * Available from https://github.com/LACourtenay/GraphGMM
   * ggplot2 
     * R library version 3.4.3
+  * httr
+    * R library version 1.4.7
 
 --------------------------------------------------------
 

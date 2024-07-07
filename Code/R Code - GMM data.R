@@ -23,15 +23,46 @@ depth_estimate <- function(point1, point2, point3) {
   
 }
 
+load_data <- function() {
+  
+  url1 <- "https://raw.githubusercontent.com/LACourtenay/Carnivore_Tooth_Pit_Classification/main/DataSets/Landmark_Carnivore_Data.txt"
+  url2 <- "https://raw.githubusercontent.com/LACourtenay/VAE_MCMC_Pachycrocuta_Simulations/main/Courtenay_et_al_2021b_data.txt"
+  
+  if (!dir.exists(".\\data")) {
+    dir.create(".\\data")
+  }
+  
+  writeBin(content(httr::GET(url1), "raw"), ".\\data\\Carnivore.txt")
+  writeBin(content(httr::GET(url2), "raw"), ".\\data\\Wolves.txt")
+  
+  first_dataset <- geomorph::read.morphologika(".\\data\\Carnivore.txt")
+  second_dataset <- geomorph::read.morphologika(".\\data\\Wolves.txt")
+  
+  no_wolves_dataset <- first_dataset
+  no_wolves_dataset$coords <- first_dataset$coords[,,first_dataset$labels != "Wolf"]
+  no_wolves_dataset$labels <- first_dataset$labels[first_dataset$labels != "Wolf"]
+  
+  first_dataset <- no_wolves_dataset
+  
+  all_coordinates <- abind::abind(first_dataset$coords, second_dataset$coords, along = 3)
+  all_labels <- c(first_dataset$labels, second_dataset$labels)
+  
+  dataset <- list(
+    coords = all_coordinates[c(1:7,9:15,17,19,21:27,29,30),,], # remove duplicate landmarks
+    labels = as.factor(all_labels)
+  )
+  
+  return(dataset)
+  
+}
+
 #
 
 # prepare procrustes landmark data ---------------------------------
 
-# load the landmark dataset from a morphologika file
+# load the landmark dataset from the different url links online
 
-dataset <- read.morphologika("Carnivores.txt")
-dataset$coords <- dataset$coords[c(1:7,9:15,17,19,21:27,29,30),,] # remove duplicate landmarks
-dataset$labels <- as.factor(dataset$labels)
+dataset <- load_data()
 
 # introduce the four pachycrocuta tooth pits
 
