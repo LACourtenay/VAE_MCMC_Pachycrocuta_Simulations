@@ -32,8 +32,8 @@ load_data <- function() {
     dir.create(".\\data")
   }
   
-  writeBin(content(httr::GET(url1), "raw"), ".\\data\\Carnivore.txt")
-  writeBin(content(httr::GET(url2), "raw"), ".\\data\\Wolves.txt")
+  writeBin(httr::content(httr::GET(url1), "raw"), ".\\data\\Carnivore.txt")
+  writeBin(httr::content(httr::GET(url2), "raw"), ".\\data\\Wolves.txt")
   
   first_dataset <- geomorph::read.morphologika(".\\data\\Carnivore.txt")
   second_dataset <- geomorph::read.morphologika(".\\data\\Wolves.txt")
@@ -205,11 +205,11 @@ for(i in 1:length(Y.gpa$Csize)) {
 
 # save the procrustes superimposed coordiantes in a format that can be loaded in python
 
-write.table(vector_from_landmarks(form_coords[,,1:823]), "fn3_reference_landmarks.txt", sep  = ",",
+write.table(vector_from_landmarks(form_coords[,,1:823]), ".\\data\\fn3_reference_landmarks.txt", sep  = ",",
             col.names = FALSE, row.names = FALSE)
-write.table(vector_from_landmarks(form_coords[,,824:827]), "fn3_pachycrocuta.txt", sep  = ",",
+write.table(vector_from_landmarks(form_coords[,,824:827]), ".\\data\\fn3_pachycrocuta.txt", sep  = ",",
             col.names = FALSE, row.names = FALSE)
-write.table(dataset$labels[1:823], "fn3_reference_labels.txt", sep  = ",",
+write.table(dataset$labels[1:823], ".\\data\\fn3_reference_labels.txt", sep  = ",",
             col.names = FALSE, row.names = FALSE)
 
 #

@@ -25,10 +25,10 @@ depth_estimate <- function(point1, point2, point3) {
 
 # Analyse output of VAE and MCMC --------------------------------------------------------------
 
-simulated_pachycrocuta1 <- read.table("reconstructed_pachycrocuta1.txt", header = FALSE, sep = ",")
-simulated_pachycrocuta2 <- read.table("reconstructed_pachycrocuta2.txt", header = FALSE, sep = ",")
-simulated_pachycrocuta3 <- read.table("reconstructed_pachycrocuta3.txt", header = FALSE, sep = ",")
-simulated_pachycrocuta4 <- read.table("reconstructed_pachycrocuta4.txt", header = FALSE, sep = ",")
+simulated_pachycrocuta1 <- read.table(".\\data\\reconstructed_pachycrocuta1.txt", header = FALSE, sep = ",")
+simulated_pachycrocuta2 <- read.table(".\\data\\reconstructed_pachycrocuta2.txt", header = FALSE, sep = ",")
+simulated_pachycrocuta3 <- read.table(".\\data\\reconstructed_pachycrocuta3.txt", header = FALSE, sep = ",")
+simulated_pachycrocuta4 <- read.table(".\\data\\reconstructed_pachycrocuta4.txt", header = FALSE, sep = ",")
 simulated_pachycrocuta <- rbind(simulated_pachycrocuta1, simulated_pachycrocuta2, simulated_pachycrocuta3, simulated_pachycrocuta4)
 np1 <- nrow(simulated_pachycrocuta)
 simulated_pachycrocuta_tensor <- array(numeric(), dim = c(25, 3, 0))

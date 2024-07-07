@@ -1,28 +1,23 @@
 
-# load libraries
+# we have to redefine the architecture and load the trained weights from before
 
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, Input, Flatten, Dense, Activation
 from tensorflow.keras.layers import Reshape, Conv2DTranspose, Lambda
 from tensorflow.keras import backend as K
-from sklearn.model_selection import train_test_split
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import *
 import sklearn
-import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-
 
 print("Libraries\n------------------\n")
 print(f"Tensorflow: {tf.__version__}")
 print(f"Scikit-Learn: {sklearn.__version__}")
 print(f"Matplotlib: {matplotlib.__version__}")
 print(f"Numpy: {np.__version__}")
-
-# define cyclic learning rate class
 
 class CyclicLR(Callback):
     def __init__(self, base_lr=0.001, max_lr=0.006, step_size=2000., mode='triangular',
@@ -93,46 +88,16 @@ class CyclicLR(Callback):
         
         K.set_value(self.model.optimizer.lr, self.clr())
         
-# define the swish activation function
-
+        
 def swish(x, beta = 1):
     return(x * K.sigmoid(beta * x))
 from tensorflow.keras.utils import get_custom_objects
 from tensorflow.keras.layers import Activation
 get_custom_objects().update({"swish":Activation(swish)})
 
-# load flattened landmark data that was prepared in R
-
-landmarks_data = np.loadtxt("fn3_reference_landmarks.txt", delimiter = ",")
-
-with open('fn3_reference_labels.txt', 'r') as f:
-    labels_data = [line.strip() for line in f.readlines()]
-
-landmarks_array = np.array(landmarks_data)
-
+latent_dims = 15
 n_individuals = 823
 n_points = 25
-
-# reshape the flattened landmarks to their original tensor shape
-
-reshaped_landmarks = landmarks_array.reshape((n_individuals, n_points, 3))
-
-X = reshaped_landmarks
-y = np.array(labels_data)
-X = X.reshape(-1, n_points, 3, 1)
-
-# define train and test sets
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-val_size = np.round(X_train.shape[0] * 0.2)
-print(f"Train set: {X_train.shape[0] - val_size:.0f} individuals ({((X_train.shape[0] - val_size) / X.shape[0]) * 100:.0f}%)")
-print(f"Test set: {X_test.shape[0]} individuals ({(X_test.shape[0] / X.shape[0]) * 100:.0f}%)")
-print(f"Validation set: {val_size:.0f} individuals ({val_size / X.shape[0] * 100:.0f}%)")
-
-# define VAE architecture
-
-latent_dims = 15
 
 x = Input(shape = (n_points, 3, 1))
 h = Conv2D(64, (3, 3), (1, 3), activation = "swish", padding = "same",
@@ -158,9 +123,8 @@ h_decoder = Dense(n_points * 3 * 64, activation = "swish",
 h_decoder = Reshape((n_points, 3, 64)) (h_decoder)
 x_bar = Conv2DTranspose(1, (3, 3), (1, 1), activation = "linear", padding = "same") (h_decoder)
 
-vae = Model(x, x_bar)
 
-# define loss functions
+vae = Model(x, x_bar)
 
 reconstruction_loss = tf.sqrt(tf.reduce_mean(tf.square(K.flatten(x) - K.flatten(x_bar))))
 kl_loss = -0.5 * tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis = 1)
@@ -175,33 +139,10 @@ clr = CyclicLR(base_lr = 0.0001,
               step_size = 16,
               mode = "triangular2")
 
-# fit the model
+custom_objects = {'swish': Activation('swish')}
 
-history = vae.fit(
-    X_train, X_train, shuffle = True,
-    epochs = 100, batch_size = 32,
-    validation_split = 0.2, # define validation set
-    callbacks = [clr]
-)
-
-# plot loss curves
-
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('Model Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# calculate test loss
-
-x_prima = vae.predict(X_test, verbose = False)
-error = np.square(x_prima.reshape(X_test.shape[0], n_points * 3) - X_test.reshape(X_test.shape[0], n_points * 3))
-np.sqrt(np.mean(error))
-
-# extract weights of different components of the algorithm
+from tensorflow.keras.layers import Activation
+get_custom_objects().update({"swish": Activation(swish)})
 
 input_generator = Input(shape = (latent_dims, ))
 h_generator = Dense(n_points * 3 * 64, activation = "swish",
@@ -211,15 +152,91 @@ h_generator = Reshape((n_points, 3, 64)) (h_generator)
 x_bar = Conv2DTranspose(1, (3, 3), (1, 1), activation = "linear", padding = "same") (h_generator)
 generator = Model(input_generator, x_bar)
 generator.set_weights(vae.get_weights()[6:10])
-encoder = Model(x, z_mean)
 
 central_tendency_encoder = Model(x, z_mean)
 deviation_encoder = Model(x, z_log_var)
 
-# save the model weights
+encoder = Model(x, z_mean)
 
-central_tendency_encoder.save_weights("central_tendency_encoder.h5")
-deviation_encoder.save_weights("deviation_encoder.h5")
-vae.save_weights("vae.h5")
-generator.save_weights("generator.h5")
-encoder.save_weights("encoder.h5")
+# LOAD WEIGHTS
+
+central_tendency_encoder.load_weights("/new_trained_weights/central_tendency_encoder.h5")
+deviation_encoder.load_weights("/new_trained_weights/deviation_encoder.h5")
+vae.load_weights("/new_trained_weights/vae.h5")
+generator.load_weights("/new_trained_weights/generator.h5")
+encoder.load_weights("/new_trained_weights/encoder.h5")
+
+# MCMC ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# define the sampling function
+
+def sample_distribution(mu_vector, sd_vector, n_samples=10000, step_size=0.001):
+    
+    starting_point = np.array([np.random.normal(mu, sd) for mu, sd in zip(mu_vector, sd_vector)])
+
+    latent_samples = np.empty((0, len(mu_vector)))
+
+    current_step = starting_point
+    latent_samples = np.vstack((latent_samples, current_step))
+
+    for _ in range(n_samples):
+        pdf_current = np.prod(np.exp(-0.5 * ((current_step - mu_vector) / sd_vector) ** 2) / (sd_vector * np.sqrt(2 * np.pi)))
+
+        perturbation = np.random.normal(0, step_size, len(mu_vector))
+        proposed_step = current_step + perturbation
+
+        pdf_proposed = np.prod(np.exp(-0.5 * ((proposed_step - mu_vector) / sd_vector) ** 2) / (sd_vector * np.sqrt(2 * np.pi)))
+
+        acceptance_ratio = pdf_proposed / pdf_current
+
+        if np.random.uniform() < acceptance_ratio:
+            current_step = proposed_step
+
+        latent_samples = np.vstack((latent_samples, current_step))
+
+    latent_samples = np.unique(latent_samples, axis=0)
+
+    return latent_samples
+
+# load the coordiante values for the pachycrocuta individuals
+
+pachycrocuta = np.loadtxt("./data/fn3_pachycrocuta.txt", delimiter = ",")
+pachycrocuta = pachycrocuta.reshape(pachycrocuta.shape[0], 25, 3, 1)
+
+# define the properties of the latent dimension for the pachycrocuta individual
+
+latent_mean = central_tendency_encoder(pachycrocuta).numpy()
+latent_sd = deviation_encoder(pachycrocuta).numpy()
+latent_sd = np.sqrt(np.exp(latent_sd)) * 0.01 # scale to the gaussian distribution from reparametrization trick
+
+# simulate pachycrocuta pits based on the first pit from FN3
+
+latent_individuals = sample_distribution(latent_mean[0], np.abs(latent_sd[0]), step_size = 0.005)
+latent_individuals = latent_individuals[np.random.choice(latent_individuals.shape[0], size = 1000, replace=False)]
+pred_individuals = generator.predict(latent_individuals, verbose = False)
+pred_individuals = pred_individuals.reshape(latent_individuals.shape[0], n_points * 3)
+np.savetxt("./data/reconstructed_pachycrocuta1.txt", pred_individuals, delimiter=",", fmt='%f')
+
+# simulate pachycrocuta pits based on the second pit from FN3
+
+latent_individuals = sample_distribution(latent_mean[1], np.abs(latent_sd[1]), step_size = 0.005)
+latent_individuals = latent_individuals[np.random.choice(latent_individuals.shape[0], size = 1000, replace=False)]
+pred_individuals = generator.predict(latent_individuals, verbose = False)
+pred_individuals = pred_individuals.reshape(latent_individuals.shape[0], n_points * 3)
+np.savetxt("./data/reconstructed_pachycrocuta2.txt", pred_individuals, delimiter=",", fmt='%f')
+
+# simulate pachycrocuta pits based on the third pit from FN3
+
+latent_individuals = sample_distribution(latent_mean[2], np.abs(latent_sd[2]), step_size = 0.005)
+latent_individuals = latent_individuals[np.random.choice(latent_individuals.shape[0], size = 1000, replace=False)]
+pred_individuals = generator.predict(latent_individuals, verbose = False)
+pred_individuals = pred_individuals.reshape(latent_individuals.shape[0], n_points * 3)
+np.savetxt("./data/reconstructed_pachycrocuta3.txt", pred_individuals, delimiter=",", fmt='%f')
+
+# simulate pachycrocuta pits based on the fourth pit from FN3
+
+latent_individuals = sample_distribution(latent_mean[3], np.abs(latent_sd[3]), step_size = 0.005)
+latent_individuals = latent_individuals[np.random.choice(latent_individuals.shape[0], size = 1000, replace=False)]
+pred_individuals = generator.predict(latent_individuals, verbose = False)
+pred_individuals = pred_individuals.reshape(latent_individuals.shape[0], n_points * 3)
+np.savetxt("./data/reconstructed_pachycrocuta4.txt", pred_individuals, delimiter=",", fmt='%f')
