@@ -23,6 +23,10 @@ This code has been designed for the open-source free R and Python programming la
 
 The present repository contains:
 
+* <b> Supplementary File 1.pdf </b>
+  * Supplementary text, figures and tables from the original paper
+* <b> LICENSE </b>, <b>Courtenay_et_al_2021b_data.txt</b> and the <b>Rproj</b> files
+  * The LICENSE file, additional data, and files used to launch and prepare the R Studio project environment
 * <b> Pretrained VAE Weights </b>
   * Each of the h5 files containing trained VAE weights that were used for the purpose of this study
 * <b> Code </b>
